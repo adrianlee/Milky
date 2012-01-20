@@ -1,2 +1,1 @@
-npm install -g express
-npm install mongoose 
+npm install express mongoose jade stylus fbgraph everyauth
