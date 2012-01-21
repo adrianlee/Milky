@@ -1,0 +1,19 @@
+!!! 5
+html(lang="en")
+	head
+		title Camellia
+		link(rel='stylesheet', href='/css/style.css')
+	body
+		nav
+			.title
+				h1
+					a(href="/") Sandbox
+			ul.menu
+				li
+					p: a(href="/fb") facebook
+				li
+					p: a(href="/jsonp") jsonp
+				li
+					p: a(href="/mongoose") mongoose
+		#container
+			#wrapper!= body
