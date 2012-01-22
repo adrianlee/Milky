@@ -8,37 +8,7 @@ var express = require('express'),
 
 var app = express.createServer();
 
-auth.debug = true;
-
-// Auth
-auth.facebook
-	.appId('172509826448')
-	.appSecret('4821346f6d7d3f32d0af7b5eb29a6acf')
-	.entryPath('/fb/auth')
-	.scope('email,user_status')
-	.findOrCreateUser( function (session, accessToken, accessTokExtra, fbUserMetadata) {
-		// does smoething
-	})
-	.redirectPath('/');
-
-auth.password
-	.getLoginPath('/fb/login')
-	.postLoginPath('/fb/login')
-	.loginView('mongoose')
-	.authenticate( function (login, password) {
-		// something
-	})
-	.getRegisterPath('/fb/register')
-	.postRegisterPath('/fb/register')
-	.registerView('jsonp')
-	.validateRegistration( function (newUserAttributes) {
-		// something
-	})
-	.registerUser( function (newUserAttributes) {
-		//something
-	})
-	.loginSuccessRedirect('/')
-	.registerSuccessRedirect('/');
+var config = require('./config');
 
 // Configuration
 app.configure(function() {
@@ -46,13 +16,12 @@ app.configure(function() {
 	app.set('view engine', 'jade');
 	app.set('view options', { layout: true });
 	app.use(express.bodyParser());
+    app.use(express.cookieParser());
 	app.use(express.methodOverride());
 	app.use(app.router);
 	app.use(stylus.middleware({ src: __dirname + '/public'}));
 	app.use(express.static(__dirname + '/public'));
-    app.use(auth.middleware());
     app.use(express.session({ secret: 'asdasdasd'}));
-    app.use(express.cookieParser());
 });
 
 app.configure('development', function() {
@@ -78,8 +47,8 @@ app.get('/fb', function(req, res) {
 app.get('/fb/auth', function(req, res) {
 	if (!req.query.code) {
 		var authUrl = graph.getOauthUrl ({
-			'client_id': '172509826448',
-			'redirect_uri': 'http://local.host:3000/fb/auth'
+			'client_id': config.fb.appId,
+			'redirect_uri': config.fb.redirect_uri
 		});
 
 		if (!req.query.error) {
@@ -89,6 +58,20 @@ app.get('/fb/auth', function(req, res) {
 		}
 		return;
 	}
+
+	graph.authorize({
+		'client_id': config.fb.appId,
+		'client_secret': config.fb.appSecret,
+		'redirect_uri': config.fb.redirect_uri,
+		'code': req.query.code
+	}, function (err, facebookRes) {
+		res.redirect('/');
+		console.log(graph.getAccessToken());
+	});
+});
+
+app.get('/fb/logout', function(req, res) {
+	res.redirect('https://www.facebook.com/logout.php?next=' + config.fb.redirect_uri + '&access_token=' + graph.getAccessToken());
 });
 
 app.get('/jsonp', function(req, res) {
@@ -100,6 +83,7 @@ app.get('/mongoose', function(req, res) {
 	res.render('mongoose', { title: 'MONGOOSE'});
 	console.log('GET: mongoose.jade');
 });
+
 
 var port = 3000;
 app.listen(port);
