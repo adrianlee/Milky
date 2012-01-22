@@ -18,12 +18,16 @@ passport.use(new FacebookStrategy({
 	},
 	function (accessToken, refreshToken, profile, done) {
 		// User.findOrCreate({ facebookId: profile.id }, function (err, user) {
-		// 	return done(err, user);
-		// });
+  //     		return done(err, user);
+  //   	});
 		process.nextTick(function () {
-			console.log(accessToken);
+      
+			// To keep the example simple, the user's Facebook profile is returned to
+			// represent the logged-in user.  In a typical application, you would want
+			// to associate the Facebook account with a user record in your database,
+			// and return that user instead.
 			return done(null, profile);
-		});
+    	});
 	})
 );
 
