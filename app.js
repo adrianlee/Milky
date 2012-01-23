@@ -1,12 +1,13 @@
 // Modules
 var express = require('express'),
-	everyauth = require('everyauth'),
-	fbgraph = require('fbgraph'),
-	//mongoose = require('mongoose'),
-	//util = require('util'),
-	jade = require('jade'),
-	stylus = require('stylus'),
-	config = require('./config');
+    everyauth = require('everyauth'),
+    graph = require('fbgraph'),
+    //mongoose = require('mongoose'),
+    //util = require('util'),
+    jade = require('jade'),
+    stylus = require('stylus'),
+    bootstrap = require('bootstrap-stylus'),
+    config = require('./config');
 
 
 var usersById = {};
@@ -14,92 +15,105 @@ var usersByFbId = {};
 var nextUserId = 0;
 
 function addUser (source, sourceUser) {
-  var user;
-  if (arguments.length === 1) { // password-based
-    user = sourceUser = source;
-    user.id = ++nextUserId;
-    return usersById[nextUserId] = user;
-  } else { // non-password-based
-    user = usersById[++nextUserId] = {id: nextUserId};
-    user[source] = sourceUser;
-  }
-  return user;
+    var user;
+    if (arguments.length === 1) { // password-based
+        user = sourceUser = source;
+        user.id = ++nextUserId;
+        return usersById[nextUserId] = user;
+    } else { // non-password-based
+        user = usersById[++nextUserId] = {id: nextUserId};
+        user[source] = sourceUser;
+    }
+    return user;
 }
 
 // Everyauth
 everyauth.debug = true;
 
 everyauth.facebook
-	.appId(config.fb.appId)
-	.appSecret(config.fb.appSecret)
-	//.entryPath('/auth/facebook')
-	//.callbackPath('/auth/facebook/callback')
-	//.scope('email')
-	.findOrCreateUser( function (session, accessToken, accessTokenExtra, fbUserMetadata) {
-		return usersByFbId[fbUserMetadata] || (usersByFbId[fbUserMetadata.id] = addUser('facebook', fbUserMetadata));
-	})
-	.logoutPath('/fb/logout')
-	.logoutRedirectPath('/fb')
-	.redirectPath('/fb');
+    .appId(config.fb.appId)
+    .appSecret(config.fb.appSecret)
+    //.entryPath('/auth/facebook')
+    //.callbackPath('/auth/facebook/callback')
+    //.scope('email')
+    .findOrCreateUser( function (session, accessToken, accessTokenExtra, fbUserMetadata) {
+        return usersByFbId[fbUserMetadata] || (usersByFbId[fbUserMetadata.id] = addUser('facebook', fbUserMetadata));
+    })
+    .logoutPath('/fb/logout')
+    .logoutRedirectPath('/fb')
+    .redirectPath('/fb');
+
+// Graph
+var token;
+//graph.setAccessToken(everyauth.facebook.accesstoken);
+
+// Bootstrap
+function compile(str, path) {
+    return stylus(str).set('filename', path).use(bootstrap());
+}
 
 // App & Configuration
 var app = express.createServer();
 
 app.configure(function () {
-	app.set('view engine', 'jade');
-	app.set('views', __dirname + '/views');
-	app.set('view options', { layout: true });
-	app.use(express.bodyParser());
+    app.set('view engine', 'jade');
+    app.set('views', __dirname + '/views');
+    app.set('view options', { layout: true });
+    app.use(express.static(__dirname + '/public'));
+    app.use(stylus.middleware({ src: __dirname + '/public', compile: compile}));
+
+    app.use(express.bodyParser());
     app.use(express.cookieParser());
-	app.use(express.methodOverride());
+    app.use(express.methodOverride());
     app.use(express.session({ secret: 'asdasdasd'}));
     
     app.use(everyauth.middleware());
-	app.use(app.router);
-
-	app.use(express.static(__dirname + '/public'));
-	app.use(stylus.middleware({ src: __dirname + '/public'}));
-	everyauth.helpExpress(app);
+    app.use(app.router);
+    everyauth.helpExpress(app);
 });
 
 app.configure('development', function () {
-	app.use(express.errorHandler({ dumpExceptions: true, showStack: true}));
+    app.use(express.errorHandler({ dumpExceptions: true, showStack: true}));
 });
 
 app.configure('production', function () {
-	app.use(express.errorHandler());
+    app.use(express.errorHandler());
 });
 
 // Routers
 app.get('/', function (req, res) {
-	res.render('index', { title: 'Home' });
-	console.log('GET: index.jade');
+    console.log('GET: index.jade');
+    res.render('index', { title: 'Home' });
 });
 
 app.get('/fb', function (req, res) {
-	res.render('fb', { title: 'Facebook'});
-	console.log('GET: fb.jade');
+    console.log('GET: fb.jade');
+    if (req.session.auth && req.session.auth.loggedIn) {
+        console.log("graph accessToken Set: " + req.session.auth.facebook.accessToken);
+        graph.setAccessToken(req.session.auth.facebook.accessToken);
+    }
+    res.render('fb', { title: 'Facebook'});
 });
 
 app.get('/jsonp', function (req, res) {
-	res.render('jsonp', { title: 'JSONP'});
-	console.log('GET: jsonp.jade');
+    console.log('GET: jsonp.jade');
+    res.render('jsonp', { title: 'JSONP'});
 });
 
 app.get('/mongoose', function (req, res) {
-	res.render('mongoose', { title: 'MONGOOSE'});
-	console.log('GET: mongoose.jade');
+    console.log('GET: mongoose.jade');
+    res.render('mongoose', { title: 'MONGOOSE'});
 });
 
 app.get('/private', function (req, res) {
-	//console.log(req.session);
-	if (req.session.auth && req.session.auth.loggedIn) {
-		res.render('private', {title: 'Protected'});
-	} else {
-		console.log("The user is NOT logged in");
-		console.log(req.session);
-		res.redirect('/fb');
-	}
+    //console.log(req.session);
+    if (req.session.auth && req.session.auth.loggedIn) {
+        res.render('private', {title: 'Protected'});
+    } else {
+        console.log("The user is NOT logged in");
+        //console.log(req.session);
+        res.redirect('/fb');
+    }
 });
 
 

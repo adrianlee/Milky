@@ -1,1 +1,1 @@
-npm install express mongoose jade stylus passport passport-facebook
+npm install express mongoose jade stylus fbgraph everyauth bootstrap-stylus
