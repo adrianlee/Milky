@@ -2,18 +2,15 @@
 var express = require('express'),
     everyauth = require('everyauth'),
     graph = require('fbgraph'),
-    //mongoose = require('mongoose'),
-    //util = require('util'),
     jade = require('jade'),
     stylus = require('stylus'),
-    bootstrap = require('bootstrap-stylus'),
     config = require('./config');
-
 
 var usersById = {};
 var usersByFbId = {};
 var nextUserId = 0;
 
+// User functions
 function addUser (source, sourceUser) {
     var user;
     if (arguments.length === 1) { // password-based
@@ -44,24 +41,11 @@ everyauth.facebook
     .redirectPath('/fb');
 
 // Graph
-var token;
-//graph.setAccessToken(everyauth.facebook.accesstoken);
-
-// Bootstrap
-function compile(str, path) {
-    return stylus(str).set('filename', path).use(bootstrap());
-}
 
 // App & Configuration
 var app = express.createServer();
 
 app.configure(function () {
-    app.set('view engine', 'jade');
-    app.set('views', __dirname + '/views');
-    app.set('view options', { layout: true });
-    app.use(express.static(__dirname + '/public'));
-    app.use(stylus.middleware({ src: __dirname + '/public', compile: compile}));
-
     app.use(express.bodyParser());
     app.use(express.cookieParser());
     app.use(express.methodOverride());
@@ -69,6 +53,12 @@ app.configure(function () {
     
     app.use(everyauth.middleware());
     app.use(app.router);
+
+    app.set('view engine', 'jade');
+    app.set('views', __dirname + '/views');
+    app.set('view options', { layout: true });
+    app.use(express.static(__dirname + '/public'));
+    app.use(stylus.middleware({ src: __dirname + '/public'}));
     everyauth.helpExpress(app);
 });
 
@@ -92,7 +82,7 @@ app.get('/fb', function (req, res) {
         console.log("graph accessToken Set: " + req.session.auth.facebook.accessToken);
         graph.setAccessToken(req.session.auth.facebook.accessToken);
     }
-    res.render('fb', { title: 'Facebook'});
+    res.render('fb', { title: 'Facebook' });
 });
 
 app.get('/jsonp', function (req, res) {
@@ -115,7 +105,6 @@ app.get('/private', function (req, res) {
         res.redirect('/fb');
     }
 });
-
 
 var port = 3000;
 app.listen(port);

@@ -1,8 +1,6 @@
-h1 Facebook
 - if (everyauth.loggedIn)
-	p: a(href='/fb/logout') logout
 	p Welcome #{everyauth.facebook.user.name}
-	p #{JSON.stringify(everyauth.facebook.user)}
+	- console.log(JSON.stringify(everyauth.facebook.user));
 
 - else
 	p

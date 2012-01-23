@@ -1,22 +1,46 @@
 !!! 5
 html(lang="en")
-	head
-		title Camellia
-		link(rel='stylesheet', href='/css/style.css')
-	body
-		nav
-			.title
-				h1
-					a(href="/") Sandbox
-				span.label.notice hello
-			ul.menu
-				li
-					p: a(href="/fb") facebook
-				li
-					p: a(href="/private") private
-				li
-					p: a(href="/jsonp") jsonp
-				li
-					p: a(href="/mongoose") mongoose
-		#container
-			#wrapper!= body
+    head
+        title Camellia
+        link(rel='stylesheet', href='http://twitter.github.com/bootstrap/1.4.0/bootstrap.min.css')
+        link(rel='stylesheet', href='/css/style.css')
+        script(src='http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js')
+        script(src='http://twitter.github.com/bootstrap/1.4.0/bootstrap-dropdown.js')
+
+    body
+        .topbar-wrapper(style='z-index: 5;')
+            .topbar(data-dropdown='dropdown')
+                .topbar-inner
+                    .fill
+                        .container
+                            a.brand(href='/') Milky
+                            ul.nav
+                                li.dropdown
+                                    a(href='#').dropdown-toggle Facebook
+                                    ul.dropdown-menu
+                                        li: a(href='/fb') Home
+                                        li: a(href='/private') Private
+                                li: a(href='/jsonp') JSONP
+                                li: a(href='/mongoose') Mongoose
+                            .secondary-nav
+                                .connect
+                                    - if (everyauth.loggedIn)
+                                        ul.nav
+                                            li
+                                                p Logged in as #{everyauth.facebook.user.name}.
+                                                //a(href='/fb/logout') Logout
+                                    - else
+                                        a(href='/auth/facebook')
+                                            img(src='/images/connect.png')
+        .container
+          .content
+            .page-header
+              h4
+                | Page name
+                small Supporting text or tagline
+            .row
+              .span16
+                h4 Main content
+                p!= body
+          footer
+            p &copy; Lemonsweat 2011
