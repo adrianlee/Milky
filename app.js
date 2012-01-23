@@ -1,54 +1,65 @@
 // Modules
 var express = require('express'),
+	everyauth = require('everyauth'),
+	fbgraph = require('fbgraph'),
 	//mongoose = require('mongoose'),
-    passport = require('passport'),
-    FacebookStrategy = require('passport-facebook').Strategy;
 	//util = require('util'),
 	jade = require('jade'),
-	stylus = require('stylus');
+	stylus = require('stylus'),
+	config = require('./config');
 
 
-var config = require('./config');
+var usersById = {};
+var usersByFbId = {};
+var nextUserId = 0;
 
-// Passport
-passport.use(new FacebookStrategy({
-	clientID: config.fb.appId,
-	clientSecret: config.fb.appSecret,
-	callbackURL: config.fb.redirect_uri
-	},
-	function (accessToken, refreshToken, profile, done) {
-		// User.findOrCreate({ facebookId: profile.id }, function (err, user) {
-  //     		return done(err, user);
-  //   	});
-		process.nextTick(function () {
-      
-			// To keep the example simple, the user's Facebook profile is returned to
-			// represent the logged-in user.  In a typical application, you would want
-			// to associate the Facebook account with a user record in your database,
-			// and return that user instead.
-			return done(null, profile);
-    	});
+function addUser (source, sourceUser) {
+  var user;
+  if (arguments.length === 1) { // password-based
+    user = sourceUser = source;
+    user.id = ++nextUserId;
+    return usersById[nextUserId] = user;
+  } else { // non-password-based
+    user = usersById[++nextUserId] = {id: nextUserId};
+    user[source] = sourceUser;
+  }
+  return user;
+}
+
+// Everyauth
+everyauth.debug = true;
+
+everyauth.facebook
+	.appId(config.fb.appId)
+	.appSecret(config.fb.appSecret)
+	//.entryPath('/auth/facebook')
+	//.callbackPath('/auth/facebook/callback')
+	//.scope('email')
+	.findOrCreateUser( function (session, accessToken, accessTokenExtra, fbUserMetadata) {
+		return usersByFbId[fbUserMetadata] || (usersByFbId[fbUserMetadata.id] = addUser('facebook', fbUserMetadata));
 	})
-);
+	.logoutPath('/fb/logout')
+	.logoutRedirectPath('/fb')
+	.redirectPath('/fb');
 
+// App & Configuration
 var app = express.createServer();
 
-// Configuration
 app.configure(function () {
+	app.set('view engine', 'jade');
+	app.set('views', __dirname + '/views');
+	app.set('view options', { layout: true });
 	app.use(express.bodyParser());
     app.use(express.cookieParser());
 	app.use(express.methodOverride());
     app.use(express.session({ secret: 'asdasdasd'}));
     
-    app.use(passport.initialize());
-    app.use(passport.session());
+    app.use(everyauth.middleware());
 	app.use(app.router);
 
 	app.use(express.static(__dirname + '/public'));
-	app.set('view engine', 'jade');
-	app.set('views', __dirname + '/views');
-	app.set('view options', { layout: true });
 	app.use(stylus.middleware({ src: __dirname + '/public'}));
+	everyauth.helpExpress(app);
 });
 
 app.configure('development', function () {
@@ -80,30 +91,15 @@ app.get('/mongoose', function (req, res) {
 	console.log('GET: mongoose.jade');
 });
 
-// app.post('/login', passport.authenticate('local'), function(req, res) {
-// 	// if this function gets called, authentication was successful.
-// 	// 'req.user' property contains the authenticated user.
-// });
-
-app.get('/auth/facebook', 
-	passport.authenticate('facebook', { scope: ['user_status', 'user_photos'] }),
-	function ( req, res ) {
-		console.log(req);
-		console.log(res);
+app.get('/private', function (req, res) {
+	//console.log(req.session);
+	if (req.session.auth && req.session.auth.loggedIn) {
+		res.render('private', {title: 'Protected'});
+	} else {
+		console.log("The user is NOT logged in");
+		console.log(req.session);
+		res.redirect('/fb');
 	}
-);
-
-app.get('/auth/facebook/callback',
-	passport.authenticate('facebook', { failureRedirect: '/login' } ),
-	function (req, res) {
-		res.redirect('/');
-	}
-);
-
-app.get('/logout', function (req, res) {
-	console.log('GET: /logout');
-	req.logout();
-	res.redirect('/');
 });
 
 

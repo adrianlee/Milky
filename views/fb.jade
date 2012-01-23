@@ -1,2 +1,8 @@
 h1 Facebook
-p: a(href='/auth/facebook') login with facebook
+- if (everyauth.loggedIn)
+	p: a(href='/fb/logout') logout
+	p Welcome #{everyauth.facebook.user.name}
+- else
+	p
+		a(href='/auth/facebook')
+			img(src='/images/connect.png')
