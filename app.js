@@ -40,7 +40,13 @@ everyauth.facebook
     .logoutRedirectPath('/fb')
     .redirectPath('/fb');
 
-// Graph
+// Socket.io
+// var socket_manager = require('socket.io').create(io);
+
+// io.configuire(function () {
+//     io.set('transports', ['xhr-polling']);
+//     io.set('polling duration', 10);
+// });
 
 // App & Configuration
 var app = express.createServer();
@@ -81,8 +87,13 @@ app.get('/fb', function (req, res) {
     if (req.session.auth && req.session.auth.loggedIn) {
         console.log("graph accessToken Set: " + req.session.auth.facebook.accessToken);
         graph.setAccessToken(req.session.auth.facebook.accessToken);
+        graph.get('adrianlee', function (err, res) {
+            console.log(res);
+        });
+        res.render('fb', { title: 'Facebook' });
+    } else {
+        res.render('fb', { title: 'Facebook' });   
     }
-    res.render('fb', { title: 'Facebook' });
 });
 
 app.get('/jsonp', function (req, res) {

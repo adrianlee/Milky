@@ -27,8 +27,8 @@ html(lang="en")
                                     - if (everyauth.loggedIn)
                                         ul.nav
                                             li
-                                                p Logged in as #{everyauth.facebook.user.name}.
-                                                //a(href='/fb/logout') Logout
+                                                p Logged in as #{everyauth.facebook.user.name}
+                                                // a(href='/fb/logout') Logout
                                     - else
                                         a(href='/auth/facebook')
                                             img(src='/images/connect.png')
@@ -40,7 +40,6 @@ html(lang="en")
                 small Supporting text or tagline
             .row
               .span16
-                h4 Main content
                 p!= body
           footer
             p &copy; Lemonsweat 2011

@@ -35,3 +35,6 @@ body {
 .connect a img {
   margin-top: 10px;
 }
+.done {
+  text-decoration: line-through;
+}

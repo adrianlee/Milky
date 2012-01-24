@@ -1,8 +1,9 @@
 - if (everyauth.loggedIn)
+	//  Greeting
 	p Welcome #{everyauth.facebook.user.name}
-	- console.log(JSON.stringify(everyauth.facebook.user));
+	- console.log('CLIENT:' + JSON.stringify(everyauth.facebook.user));
+	a(href='/fb/logout') Logout
 
 - else
-	p
-		a(href='/auth/facebook')
-			img(src='/images/connect.png')
+	a(href='/auth/facebook')
+		img(src='/images/connect.png')
