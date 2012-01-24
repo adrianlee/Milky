@@ -6,6 +6,16 @@ html(lang="en")
         link(rel='stylesheet', href='/css/style.css')
         script(src='http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js')
         script(src='http://twitter.github.com/bootstrap/1.4.0/bootstrap-dropdown.js')
+        script(src='/socket.io/socket.io.js')
+        script
+            var socket = io.connect();
+
+            socket.on('connect', function() {
+               socket.emit('auth', = socket_id );
+               socket.on('friend', function(friend) {
+                   $('ul#friends').append('<li>friend.id</li>');
+               });
+            });
 
     body
         .topbar-wrapper(style='z-index: 5;')

@@ -3,6 +3,8 @@
 	p Welcome #{everyauth.facebook.user.name}
 	- console.log('CLIENT:' + JSON.stringify(everyauth.facebook.user));
 	a(href='/fb/logout') Logout
+	ul.friends
+		p lol
 
 - else
 	a(href='/auth/facebook')

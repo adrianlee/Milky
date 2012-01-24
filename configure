@@ -1,1 +1,1 @@
-npm install express mongoose jade stylus fbgraph everyauth
+npm install express mongoose jade stylus fbgraph everyauth socket.io node-uuid

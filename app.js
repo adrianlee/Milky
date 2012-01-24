@@ -2,9 +2,12 @@
 var express = require('express'),
     everyauth = require('everyauth'),
     graph = require('fbgraph'),
+    socket = require('socket.io'),
+    uuid = require('node-uuid'),
     jade = require('jade'),
     stylus = require('stylus'),
     config = require('./config');
+
 
 var usersById = {};
 var usersByFbId = {};
@@ -41,12 +44,13 @@ everyauth.facebook
     .redirectPath('/fb');
 
 // Socket.io
-// var socket_manager = require('socket.io').create(io);
+var io = socket.listen(app);
+var socket_manager = require('./lib/socket_manager').create(io);
 
-// io.configuire(function () {
-//     io.set('transports', ['xhr-polling']);
-//     io.set('polling duration', 10);
-// });
+io.configure(function () {
+    io.set('transports', ['xhr-polling']);
+    io.set('polling duration', 10);
+});
 
 // App & Configuration
 var app = express.createServer();
@@ -85,12 +89,24 @@ app.get('/', function (req, res) {
 app.get('/fb', function (req, res) {
     console.log('GET: fb.jade');
     if (req.session.auth && req.session.auth.loggedIn) {
-        console.log("graph accessToken Set: " + req.session.auth.facebook.accessToken);
+        //console.log("graph accessToken Set: " + req.session.auth.facebook.accessToken);
+        
         graph.setAccessToken(req.session.auth.facebook.accessToken);
-        graph.get('adrianlee', function (err, res) {
+        
+        var socket_id = uuid();
+        
+        graph.get('/me/friends&limit=4', function (err, res) {
+            if (err) {
+                console.log('Error', err);
+                return false;
+            }
             console.log(res);
+            res.data.forEach(function(friend) {
+                socket_manager.send(socket_id, 'friend', friend);
+            });
         });
-        res.render('fb', { title: 'Facebook' });
+        
+        res.render('fb', { title: 'Facebook', socket_id: socket_id });
     } else {
         res.render('fb', { title: 'Facebook' });   
     }
